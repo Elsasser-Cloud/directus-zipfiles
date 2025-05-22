@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import archiver from 'archiver';
+import { FilesService } from '@directus/api/services/files';
 
 export default {
     id: 'zipfiles',
@@ -31,11 +32,14 @@ export default {
                 const fileErrors = [];
                 const streams = [];
 
+                if (typeof filesService.getAsset !== 'function') {
+                    return res.status(500).json({
+                        error: 'FilesService.getAsset is not available. Please check your Directus version and extension context.'
+                    });
+                }
+
                 for (const file of files) {
                     try {
-                        if (typeof filesService.getAsset !== 'function') {
-                            throw new Error('Please check your Directus version. You are likely using a version older than 10.10.0.');
-                        }
                         const stream = await filesService.getAsset(file.id);
                         stream.on('error', (err) => {
                             fileErrors.push({
@@ -87,4 +91,20 @@ export default {
 
         return router;
     },
+};
+
+export default {
+    id: 'zipfiles-test',
+    handler: (router, { services, getSchema }) => {
+        const { FilesService } = services;
+        router.get('/test', async (req, res) => {
+            const schema = await getSchema();
+            const filesService = new FilesService({ schema, accountability: req.accountability });
+            res.json({
+                getAssetType: typeof filesService.getAsset,
+                filesServiceKeys: Object.keys(filesService)
+            });
+        });
+        return router;
+    }
 };

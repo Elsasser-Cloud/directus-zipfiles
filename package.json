@@ -1,8 +1,9 @@
 {
 	"name": "zipfiles",
-	"description": "Please enter a description for your extension",
+	"description": "Zipping multiple files into a single zip file",
+	"author": "Elsasser Cloud",
 	"icon": "extension",
-	"version": "0.1.7",
+	"version": "0.1.8",
 	"keywords": [
 		"directus",
 		"directus-extension",
@@ -25,8 +26,7 @@
 		"validate": "directus-extension validate"
 	},
 	"devDependencies": {
-		"@directus/extensions-sdk": "13.1.0",
-		"vue": "^3.5.14"
+		"@directus/extensions-sdk": "13.1.0"
 	},
 	"dependencies": {
 		"archiver": "^7.0.1"
