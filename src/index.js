@@ -1,7 +1,6 @@
 import fs from 'fs';
 import path from 'path';
 import archiver from 'archiver';
-import { getAsset } from '@directus/utils';
 
 export default {
     id: 'zipfiles',
