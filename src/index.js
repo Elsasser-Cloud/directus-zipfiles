@@ -24,33 +24,44 @@ export default {
                     return res.status(404).json({ error: 'No files found for provided IDs.' });
                 }
 
-                let filesAdded = 0;
+                let filesToAdd = [];
                 let missingFiles = [];
-
-                res.setHeader('Content-Type', 'application/zip');
-                res.setHeader('Content-Disposition', 'attachment; filename=files.zip');
-
-                const archive = archiver('zip', { zlib: { level: 9 } });
-                archive.on('error', err => {
-                    console.error('Archiver error:', err);
-                    res.status(500).send({ error: err.message });
-                });
-                archive.pipe(res);
 
                 for (const file of files) {
                     const absPath = path.join(storageRoot, file.filename_disk);
                     if (fs.existsSync(absPath)) {
-                        archive.file(absPath, { name: file.filename_download || file.filename_disk });
-                        filesAdded++;
+                        filesToAdd.push({
+                            absPath,
+                            name: file.filename_download || file.filename_disk
+                        });
                     } else {
                         missingFiles.push(file.id);
                         console.warn(`File not found: ${absPath} (ID: ${file.id})`);
                     }
                 }
 
-                if (filesAdded === 0) {
-                    archive.abort();
+                if (filesToAdd.length === 0) {
                     return res.status(404).json({ error: 'None of the requested files exist on disk.', missingFiles });
+                }
+
+                // Only now set headers and stream the archive
+                res.setHeader('Content-Type', 'application/zip');
+                res.setHeader('Content-Disposition', 'attachment; filename=files.zip');
+
+                const archive = archiver('zip', { zlib: { level: 9 } });
+                archive.on('error', err => {
+                    console.error('Archiver error:', err);
+                    // Only try to send error if headers not sent
+                    if (!res.headersSent) {
+                        res.status(500).send({ error: err.message });
+                    } else {
+                        res.end();
+                    }
+                });
+                archive.pipe(res);
+
+                for (const file of filesToAdd) {
+                    archive.file(file.absPath, { name: file.name });
                 }
 
                 archive.finalize();
