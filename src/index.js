@@ -14,11 +14,21 @@ export default {
                     return res.status(400).json({ error: 'No file IDs provided.' });
                 }
 
-                // Set Directus base URL once at the top-level scope for efficiency
                 const directusBaseUrl = req.directus?.url || process.env.DIRECTUS_BASE_URL || 'https://cms.elsasser.cloud';
 
                 let filesAdded = 0;
                 const fileErrors = [];
+
+                // Fetch file metadata from Directus
+                const schema = await getSchema();
+                const filesService = new FilesService({ schema, accountability: req.accountability });
+                const files = await filesService.readByQuery({ filter: { id: { _in: fileIds } } });
+
+                // Map file IDs to metadata for easy lookup
+                const fileMap = {};
+                for (const file of files) {
+                    fileMap[file.id] = file;
+                }
 
                 res.setHeader('Content-Type', 'application/zip');
                 res.setHeader('Content-Disposition', 'attachment; filename=files.zip');
@@ -34,18 +44,26 @@ export default {
                 archive.pipe(res);
 
                 for (const fileId of fileIds) {
+                    const fileMeta = fileMap[fileId];
+                    if (!fileMeta) {
+                        fileErrors.push({
+                            id: fileId,
+                            error: 'File metadata not found'
+                        });
+                        continue;
+                    }
                     try {
                         const url = `${directusBaseUrl}/assets/${fileId}?download`;
                         const response = await fetch(url, {
                             headers: {
-                                // Forward the user's auth token if needed
                                 authorization: req.headers.authorization
                             }
                         });
                         if (!response.ok) {
                             throw new Error(`Failed to fetch file: ${response.statusText}`);
                         }
-                        archive.append(response.body, { name: `${fileId}` });
+                        // Use the original filename for the zip entry
+                        archive.append(response.body, { name: fileMeta.filename_download || fileMeta.filename_disk });
                         filesAdded++;
                     } catch (err) {
                         fileErrors.push({
