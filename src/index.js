@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import archiver from 'archiver';
+import { getAsset } from '@directus/utils';
 
 export default {
     id: 'zipfiles',
@@ -15,7 +16,10 @@ export default {
                 }
 
                 const schema = await getSchema();
-                const filesService = new FilesService({ schema });
+                const filesService = new FilesService({
+                    schema,
+                    accountability: req.accountability // if available in your context
+                });
 
                 const files = await filesService.readByQuery({ filter: { id: { _in: fileIds } } });
 
@@ -26,11 +30,13 @@ export default {
                 // Prepare to collect errors
                 let filesAdded = 0;
                 const fileErrors = [];
-
-                // Try to get all streams first, collecting errors
                 const streams = [];
+
                 for (const file of files) {
                     try {
+                        if (typeof filesService.getAsset !== 'function') {
+                            throw new Error('Please check your Directus version. You are likely using a version older than 10.10.0.');
+                        }
                         const stream = await filesService.getAsset(file.id);
                         stream.on('error', (err) => {
                             fileErrors.push({
