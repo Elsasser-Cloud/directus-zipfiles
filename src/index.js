@@ -5,9 +5,7 @@ import { FilesService } from '@directus/api/services/files';
 
 export default {
     id: 'zipfiles',
-    handler: (router, { services, getSchema }) => {
-        const { FilesService } = services;
-
+    handler: (router, { getSchema }) => {
         router.post('/', async (req, res) => {
             try {
                 const { fileIds } = req.body;
@@ -18,7 +16,7 @@ export default {
                 const schema = await getSchema();
                 const filesService = new FilesService({
                     schema,
-                    accountability: req.accountability // if available in your context
+                    accountability: req.accountability || {}
                 });
 
                 const files = await filesService.readByQuery({ filter: { id: { _in: fileIds } } });
@@ -27,7 +25,6 @@ export default {
                     return res.status(404).json({ error: 'No files found for provided IDs.' });
                 }
 
-                // Prepare to collect errors
                 let filesAdded = 0;
                 const fileErrors = [];
                 const streams = [];
@@ -64,7 +61,6 @@ export default {
                     });
                 }
 
-                // Set headers before streaming
                 res.setHeader('Content-Type', 'application/zip');
                 res.setHeader('Content-Disposition', 'attachment; filename=files.zip');
 
