@@ -29,15 +29,17 @@ export default {
                 const fileErrors = [];
                 const streams = [];
 
-                if (typeof filesService.getAsset !== 'function') {
+                // Use the storage driver from the request context
+                const storage = req.storage;
+                if (!storage || typeof storage.getReadStream !== 'function') {
                     return res.status(500).json({
-                        error: 'FilesService.getAsset is not available. Please check your Directus version and extension context.'
+                        error: 'Storage driver is not available in the request context.'
                     });
                 }
 
                 for (const file of files) {
                     try {
-                        const stream = await filesService.getAsset(file.id);
+                        const stream = await storage.getReadStream(file.filename_disk);
                         stream.on('error', (err) => {
                             fileErrors.push({
                                 id: file.id,
