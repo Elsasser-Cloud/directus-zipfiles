@@ -29,6 +29,7 @@
 		"@directus/extensions-sdk": "13.1.0"
 	},
 	"dependencies": {
-		"archiver": "^7.0.1"
+		"archiver": "^7.0.1",
+		"node-fetch": "^3.3.2"
 	}
 }
