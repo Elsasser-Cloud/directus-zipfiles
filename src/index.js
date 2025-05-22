@@ -89,14 +89,7 @@ export default {
             }
         });
 
-        return router;
-    },
-};
-
-export default {
-    id: 'zipfiles-test',
-    handler: (router, { services, getSchema }) => {
-        const { FilesService } = services;
+        // Add the test route here
         router.get('/test', async (req, res) => {
             const schema = await getSchema();
             const filesService = new FilesService({ schema, accountability: req.accountability });
@@ -105,6 +98,7 @@ export default {
                 filesServiceKeys: Object.keys(filesService)
             });
         });
+
         return router;
-    }
+    },
 };
