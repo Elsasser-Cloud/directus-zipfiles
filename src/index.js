@@ -15,7 +15,7 @@ export default {
                 }
 
                 // Set Directus base URL once at the top-level scope for efficiency
-                const directusBaseUrl = req.directus?.url || process.env.DIRECTUS_BASE_URL || 'http://localhost:8055';
+                const directusBaseUrl = req.directus?.url || process.env.DIRECTUS_BASE_URL || 'https://cms.elsasser.cloud';
 
                 let filesAdded = 0;
                 const fileErrors = [];
