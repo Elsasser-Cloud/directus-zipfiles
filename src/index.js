@@ -41,12 +41,20 @@ export default {
                 let filesAdded = 0;
                 for (const file of files) {
                     try {
-                        // This uses the Directus storage driver to get a readable stream
+                        console.log('Attempting to stream file:', file.id, file.filename_disk, file.filename_download);
                         const stream = await filesService.getAsset(file.id);
+
+                        // Ensure the stream is in flowing mode
+                        stream.on('error', (err) => {
+                            console.warn(`Stream error for file ${file.id}:`, err);
+                        });
+                        // This will put the stream in flowing mode
+                        stream.resume();
+
                         archive.append(stream, { name: file.filename_download || file.filename_disk });
                         filesAdded++;
                     } catch (err) {
-                        console.warn(`Could not stream file ${file.id}: ${err.message}`);
+                        console.warn(`Could not stream file ${file.id}:`, err);
                     }
                 }
 
